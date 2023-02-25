@@ -8,5 +8,5 @@ require (
 	github.com/ipfs/go-ipfs-api v0.2.0
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/whyrusleeping/stump v0.0.0-20160611222256-206f8f13aae1
-	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
+	golang.org/x/sys v0.1.0
 )
