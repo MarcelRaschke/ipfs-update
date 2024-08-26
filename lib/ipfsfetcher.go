@@ -9,8 +9,8 @@ import (
 	"time"
 
 	api "github.com/ipfs/go-ipfs-api"
-	"github.com/ipfs/go-ipfs/repo/fsrepo/migrations"
 	"github.com/ipfs/ipfs-update/util"
+	"github.com/ipfs/kubo/repo/fsrepo/migrations"
 )
 
 const (
@@ -53,7 +53,7 @@ func NewIpfsFetcher(distPath string, fetchLimit int64) *IpfsFetcher {
 // Fetch attempts to fetch the file at the given path, from the distribution
 // site configured for this HttpFetcher.  Returns io.ReadCloser on success,
 // which caller must close.
-func (f *IpfsFetcher) Fetch(ctx context.Context, filePath string) (io.ReadCloser, error) {
+func (f *IpfsFetcher) Fetch(ctx context.Context, filePath string) ([]byte, error) {
 	sh, _, err := ApiShell("")
 	if err != nil {
 		return nil, err
@@ -67,10 +67,15 @@ func (f *IpfsFetcher) Fetch(ctx context.Context, filePath string) (io.ReadCloser
 		return nil, resp.Error
 	}
 
+	var rc io.ReadCloser
 	if f.limit != 0 {
-		return migrations.NewLimitReadCloser(resp.Output, f.limit), nil
+		rc = migrations.NewLimitReadCloser(resp.Output, f.limit)
+	} else {
+		rc = resp.Output
 	}
-	return resp.Output, nil
+	defer rc.Close()
+
+	return io.ReadAll(rc)
 }
 
 // ApiShell creates a new ipfs api shell and checks that it is up.  If the shell

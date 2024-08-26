@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -13,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ipfs/go-ipfs/repo/fsrepo/migrations"
 	util "github.com/ipfs/ipfs-update/util"
+	"github.com/ipfs/kubo/repo/fsrepo/migrations"
 	stump "github.com/whyrusleeping/stump"
 )
 
@@ -60,7 +59,7 @@ func (d *daemon) Close() error {
 func tweakConfig(ipfspath string) error {
 	cfgpath := filepath.Join(ipfspath, "config")
 	cfg := make(map[string]interface{})
-	cfgbytes, err := ioutil.ReadFile(cfgpath)
+	cfgbytes, err := os.ReadFile(cfgpath)
 	if err != nil {
 		return err
 	}
@@ -93,7 +92,7 @@ func tweakConfig(ipfspath string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(cfgpath, out, 0o644)
+	err = os.WriteFile(cfgpath, out, 0o644)
 	if err != nil {
 		return fmt.Errorf("error writing tweaked config: %s", err)
 	}
@@ -203,7 +202,7 @@ func TestBinary(bin, version string) error {
 		return fmt.Errorf("error creating test staging directory: %s", err)
 	}
 
-	tdir, err := ioutil.TempDir(staging, "test")
+	tdir, err := os.MkdirTemp(staging, "test")
 	if err != nil {
 		return err
 	}
@@ -269,7 +268,13 @@ func TestBinary(bin, version string) error {
 		return fmt.Errorf("test file add: %s", err)
 	}
 
-	err = testRefsList(tdir, bin)
+	expectedCID := "bafkreici5oilk5bkifyzsbo7bdgwl246a2t53ejm44ektaqrsl3ye7dwy4"
+	if util.BeforeVersion("v0.12.0", version) {
+		// v0.12.0 switched storing blocks by multihash instead of CID
+		expectedCID = "QmTFJQ68kaArzsqz2Yjg1yMyEA5TXTfNw6d9wSFhxtBxz2"
+	}
+
+	err = testRefsList(tdir, bin, expectedCID)
 	if err != nil {
 		return fmt.Errorf("test refs list: %s", err)
 	}
@@ -292,7 +297,7 @@ func testFileAdd(tdir, bin string) error {
 	stump.VLog("  - checking that we can add and cat a file")
 	text := []byte("hello world! This node should work")
 	testFile := filepath.Join(tdir, "/test.txt")
-	err := ioutil.WriteFile(testFile, text, 0o644)
+	err := os.WriteFile(testFile, text, 0o644)
 	if err != nil {
 		stump.Error("testfileadd could not create test file: %s", err)
 	}
@@ -322,7 +327,7 @@ func testFileAdd(tdir, bin string) error {
 	return nil
 }
 
-func testRefsList(tdir, bin string) error {
+func testRefsList(tdir, bin, expectedCID string) error {
 	stump.VLog("  - checking that file shows up in ipfs refs local")
 	c := exec.Command(bin, "refs", "local")
 	if runtime.GOOS == "windows" {
@@ -337,16 +342,15 @@ func testRefsList(tdir, bin string) error {
 	}
 
 	hashes := strings.Split(string(out), "\n")
-	exp := "QmTFJQ68kaArzsqz2Yjg1yMyEA5TXTfNw6d9wSFhxtBxz2"
 	var found bool
 	for _, h := range hashes {
-		if h == exp {
+		if h == expectedCID {
 			found = true
 			break
 		}
 	}
 	if !found {
-		return fmt.Errorf("expected to see %s in the local refs", exp)
+		return fmt.Errorf("expected to see %s in the local refs", expectedCID)
 	}
 
 	return nil

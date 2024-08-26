@@ -4,22 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/blang/semver"
-	"github.com/ipfs/go-ipfs/repo/fsrepo/migrations"
+	"github.com/blang/semver/v4"
 	test "github.com/ipfs/ipfs-update/test-dist"
 	"github.com/ipfs/ipfs-update/util"
+	"github.com/ipfs/kubo/repo/fsrepo/migrations"
 	"github.com/whyrusleeping/stump"
 )
 
 func (i *Install) getTmpPath() (string, error) {
-	tmpd, err := ioutil.TempDir("", "ipfs-update")
+	tmpd, err := os.MkdirTemp("", "ipfs-update")
 	if err != nil {
 		return "", err
 	}
@@ -219,7 +218,7 @@ func StashOldBinary(tag string, keep bool) (string, error) {
 	}
 
 	// write the old path of the binary to the backup dir
-	err = ioutil.WriteFile(pathpath, []byte(loc), 0o644)
+	err = os.WriteFile(pathpath, []byte(loc), 0o644)
 	if err != nil {
 		return "", fmt.Errorf("could not stash path: %s", err)
 	}
@@ -244,6 +243,7 @@ func (i *Install) downloadNewBinary(ctx context.Context) error {
 		return err
 	}
 
+	// TODO: switch to "kubo" distname after 1+ year since rename in 2022 ;-)
 	distname := "go-ipfs"
 	stump.Log("fetching %s version %s", distname, i.targetVers)
 
@@ -401,7 +401,7 @@ func ensure(dir string) bool {
 }
 
 func canWrite(dir string) bool {
-	fi, err := ioutil.TempFile(dir, ".ipfs-update-test")
+	fi, err := os.CreateTemp(dir, ".ipfs-update-test")
 	if err != nil {
 		return false
 	}

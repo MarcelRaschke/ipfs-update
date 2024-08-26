@@ -3,8 +3,9 @@ package main
 import (
 	"bufio"
 	"context"
+	_ "embed"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -12,14 +13,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ipfs/go-ipfs/repo/fsrepo/migrations"
-	"github.com/ipfs/ipfs-update/config"
 	"github.com/ipfs/ipfs-update/lib"
 	"github.com/ipfs/ipfs-update/util"
+	"github.com/ipfs/kubo/repo/fsrepo/migrations"
 
 	"github.com/urfave/cli/v2"
 	"github.com/whyrusleeping/stump"
 )
+
+//go:embed  version.json
+var versionFile []byte
+var CurrentVersionNumber = readCurrentVersionNumberFromEmbed(versionFile)
 
 func init() {
 	stump.ErrOut = os.Stderr
@@ -46,7 +50,7 @@ Otherwise you can close this window.`, exeName, windowsHelpURL)
 
 	app := cli.NewApp()
 	app.Usage = "Update ipfs."
-	app.Version = config.CurrentVersionNumber
+	app.Version = CurrentVersionNumber
 
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
@@ -218,7 +222,7 @@ var cmdRevert = &cli.Command{
 		if err != nil {
 			stump.Fatal("could not find ipfs directory:", err)
 		}
-		oldpath, err := ioutil.ReadFile(path.Join(ipfsDir, "old-bin", "path-old"))
+		oldpath, err := os.ReadFile(path.Join(ipfsDir, "old-bin", "path-old"))
 		if err != nil {
 			stump.Fatal("path for previous installation could not be read:", err)
 		}
@@ -314,7 +318,24 @@ func createFetcher(c *cli.Context) migrations.Fetcher {
 		distPath = migrations.GetDistPathEnv("")
 	}
 
+	customIpfsGatewayURL := os.Getenv("IPFS_GATEWAY") // uses https://ipfs.io as default, if unset
+
 	return migrations.NewMultiFetcher(
 		lib.NewIpfsFetcher(distPath, 0),
-		migrations.NewHttpFetcher(distPath, "", userAgent, 0))
+		&migrations.RetryFetcher{
+			Fetcher:  migrations.NewHttpFetcher(distPath, customIpfsGatewayURL, userAgent, 0),
+			MaxTries: 3,
+		})
+}
+
+func readCurrentVersionNumberFromEmbed(versionFile []byte) string {
+	type VersionFile struct {
+		Version string `json:"version"`
+	}
+	manifest := VersionFile{}
+	err := json.Unmarshal(versionFile, &manifest)
+	if err != nil {
+		return "0.0.0-unknown"
+	}
+	return manifest.Version
 }
