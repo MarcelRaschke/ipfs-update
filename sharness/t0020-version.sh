@@ -16,9 +16,9 @@ test_expect_success "'ipfs-update versions' works" '
 '
 
 test_expect_success "'ipfs-update versions' output looks good" '
-	grep v0.3.7 actual &&
-	grep v0.3.8 actual &&
-	grep v0.3.9 actual
+	grep v0.14.0 actual &&
+	grep v0.14.0-rc1 actual &&
+	grep v0.36.0 actual
 '
 
 test_expect_success "start a docker container" '
@@ -43,9 +43,9 @@ test_expect_success "'ipfs-update versions' works" '
 '
 
 test_expect_success "'ipfs-update versions' output looks good" '
-	grep v0.3.7 actual &&
-	grep v0.3.8 actual &&
-	grep v0.3.9 actual
+	grep v0.14.0 actual &&
+	grep v0.14.0-rc1 actual &&
+	grep v0.36.0 actual
 '
 
 test_expect_success "stop a docker container" '

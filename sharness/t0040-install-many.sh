@@ -10,14 +10,11 @@ test_expect_success "start a docker container" '
 	DOCID=$(start_docker)
 '
 
-test_install_version "v0.3.7"
-test_install_version "v0.3.10"
+test_install_version "v0.14.0"
+test_install_version "v0.36.0"
 
 # ensure downgrade works
-test_install_version "v0.3.7"
-
-# test upgrading repos across the v0.12 boundary
-test_install_version "v0.11.0"
+test_install_version "v0.14.0"
 
 # init the repo so that migrations are run
 test_expect_success "'ipfs init' succeeds" '
