@@ -63,7 +63,7 @@ test_install_version() {
 	'
 
 	test_expect_success "'ipfs-update install' output looks good" '
-		grep "fetching go-ipfs version $VERSION" actual &&
+		grep "fetching kubo version $VERSION" actual &&
 		grep "Installation complete." actual ||
 		test_fsh cat actual
 	'

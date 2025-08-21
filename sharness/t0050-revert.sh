@@ -10,8 +10,8 @@ test_expect_success "start a docker container" '
 	DOCID=$(start_docker)
 '
 
-test_install_version "v0.3.9"
-test_install_version "v0.3.10"
+test_install_version "v0.14.0"
+test_install_version "v0.36.0"
 
 
 test_expect_success "'ipfs-update revert' works" '
@@ -30,7 +30,7 @@ test_expect_success "'ipfs-update version' works" '
 '
 
 test_expect_success "'ipfs-update version' output looks good" '
-	echo "v0.3.9" >expected &&
+	echo "v0.14.0" >expected &&
 	test_cmp expected actual
 '
 

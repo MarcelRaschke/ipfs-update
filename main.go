@@ -91,7 +91,7 @@ var cmdVersions = &cli.Command{
 	ArgsUsage: " ",
 	Action: func(c *cli.Context) error {
 		fetcher := createFetcher(c)
-		vs, err := migrations.DistVersions(c.Context, fetcher, "go-ipfs", true)
+		vs, err := migrations.DistVersions(c.Context, fetcher, "kubo", true)
 		if err != nil {
 			stump.Fatal("failed to query versions:", err)
 		}
@@ -142,7 +142,7 @@ var cmdInstall = &cli.Command{
 
 		if vers == "latest" || vers == "beta" {
 			stable := vers == "latest"
-			latest, err := migrations.LatestDistVersion(c.Context, fetcher, "go-ipfs", stable)
+			latest, err := migrations.LatestDistVersion(c.Context, fetcher, "kubo", stable)
 			if err != nil {
 				stump.Fatal("error resolving %q: %s", vers, err)
 			}
@@ -262,7 +262,7 @@ var cmdFetch = &cli.Command{
 				stump.VLog("looking up 'latest'")
 				stable = true
 			}
-			latest, err := migrations.LatestDistVersion(c.Context, fetcher, "go-ipfs", stable)
+			latest, err := migrations.LatestDistVersion(c.Context, fetcher, "kubo", stable)
 			if err != nil {
 				stump.Fatal("error querying %q version: %s", vers, err)
 			}
@@ -278,9 +278,9 @@ var cmdFetch = &cli.Command{
 			output = migrations.ExeName("ipfs-" + vers)
 		}
 
-		stump.Log("fetching go-ipfs version", vers)
+		stump.Log("fetching kubo version", vers)
 
-		_, err = migrations.FetchBinary(c.Context, fetcher, "go-ipfs", vers, "ipfs", output)
+		_, err = migrations.FetchBinary(c.Context, fetcher, "kubo", vers, "ipfs", output)
 		if err != nil {
 			stump.Fatal("failed to fetch binary:", err)
 		}
